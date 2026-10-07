@@ -1,0 +1,773 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Mystery at the Museum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&family=VT323&display=swap">
+<style>
+/* Layout: one game stage under a level track; the printed artwork sits in chunky board-game frames with ink outlines and hard offset shadows, on mustard paper like the box cover */
+:root{
+  --paper:#FBE7A6; --dot:#EFCB63; --sun:#F5C22B; --ink:#2A1538; --plum:#5B1E5F; --card:#FFFDF6; --muted:#6B5876;
+  --l1:#F5C22B; --l2:#5A9BEA; --l3:#8CCB2E; --l4:#EE6A66;
+  --display:'Lilita One','Arial Rounded MT Bold',system-ui,sans-serif;
+  --body:'Nunito',ui-rounded,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --cam:'VT323',ui-monospace,'Courier New',monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:var(--paper)}
+body{font-family:var(--body);color:var(--ink);font-size:16px;line-height:1.5;font-weight:600;
+  background:var(--paper) radial-gradient(var(--dot) 1.3px,transparent 1.4px) 0 0/22px 22px}
+#app{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:14px 48px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.01em}
+p{margin:0}
+button{font:inherit;color:inherit}
+img{display:block}
+:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.brand{font-family:var(--display);font-size:1.4rem;background:none;border:0;padding:0;cursor:pointer;display:flex;align-items:center;gap:8px}
+.brand img{width:34px;height:34px;object-fit:contain}
+.track{display:flex;gap:6px;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:6px;padding:3px 12px 3px 3px;border:2.5px solid var(--ink);border-radius:999px;background:var(--card);font-weight:900;font-size:.85rem;cursor:pointer}
+.step .dot{width:24px;height:24px;border-radius:50%;background:var(--c);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-size:.85rem}
+.step[aria-current="step"]{background:var(--c);box-shadow:2px 2px 0 var(--ink)}
+.step .lbl{display:none}
+@media (min-width:860px){.step .lbl{display:inline}}
+
+.btn{font-family:var(--display);font-size:1.12rem;letter-spacing:.02em;background:var(--sun);border:3px solid var(--ink);border-radius:999px;padding:.5em 1.25em;box-shadow:3px 3px 0 var(--ink);cursor:pointer;transition:transform .08s,box-shadow .08s;display:inline-flex;align-items:center;gap:.45em;justify-content:center}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.ghost{background:var(--card)}
+.btn.lv{background:var(--lv)}
+.btn.small{font-size:.95rem;padding:.35em .9em}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--ink)}
+.btn svg{width:1.1em;height:1.1em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.panel{background:var(--card);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:999px;padding:1px 10px;font-size:.82rem;font-weight:900;background:var(--card)}
+.chip img{width:28px;height:28px;object-fit:contain}
+.eyebrow{font-weight:900;font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--plum)}
+.msg{font-size:1.08rem;font-weight:800;min-height:1.6em}
+.msg.good{color:#2D6B26}
+.msg.bad{color:#A3262B}
+.hint{font-size:.92rem;color:var(--muted)}
+
+/* title */
+.hero{display:grid;gap:0;overflow:hidden;grid-template-columns:1fr}
+@media (min-width:820px){.hero{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
+.hero .art{background:var(--sun);border-bottom:3px solid var(--ink);display:grid;place-items:center}
+@media (min-width:820px){.hero .art{border-bottom:0;border-right:3px solid var(--ink)}}
+.hero .art img{width:100%;height:100%;object-fit:cover;max-height:560px}
+.hero .copy{padding:clamp(20px,3.5vw,36px);display:grid;gap:18px;align-content:center}
+.hero .lede{font-size:1.18rem;font-weight:800;max-width:30em}
+.toyrow{display:flex;gap:6px;flex-wrap:wrap;align-items:end}
+.toyrow img{height:52px;width:auto}
+.opts{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.opt{padding:16px 18px;display:grid;gap:10px;align-content:start}
+.seg{display:inline-flex;justify-self:start;border:2.5px solid var(--ink);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:5px 14px;font-weight:900;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.credit{font-size:.88rem;color:var(--muted);max-width:62em}
+
+/* intro card */
+.intro{max-width:880px;margin:0 auto;width:100%;overflow:hidden}
+.intro .band{background:var(--lv);border-bottom:3px solid var(--ink);padding:18px 22px;display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap}
+.intro .band h2{font-size:clamp(1.8rem,5vw,2.6rem)}
+.intro .body{padding:22px;display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:700px){.intro .body{grid-template-columns:150px minmax(0,1fr)}}
+.intro .joker{width:150px;max-width:40%;border-radius:12px}
+@media (max-width:699px){.intro .joker{display:none}}
+.letter{display:grid;gap:12px;align-content:start}
+.letter .story{font-size:clamp(1.12rem,2.5vw,1.3rem);line-height:1.55;max-width:36em}
+.letter .sign{font-style:italic}
+details.notes{border:2px dashed var(--muted);border-radius:12px;padding:10px 14px}
+details.notes summary{cursor:pointer;font-weight:900}
+details.notes ul{margin:8px 0 0;padding-left:1.2em;display:grid;gap:4px}
+
+/* play area */
+.playhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.playhead h2{font-size:clamp(1.5rem,4vw,2.1rem)}
+.task{font-size:1.12rem;font-weight:800;max-width:48em}
+
+/* level 1 */
+.photos{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:860px){.photos{grid-template-columns:1fr 1fr}}
+.cam{border:3px solid var(--ink);border-radius:14px;overflow:hidden;background:#1d1622;box-shadow:4px 4px 0 var(--ink)}
+.camlab{font-family:var(--cam);font-size:1.25rem;color:#9CF29A;padding:2px 10px;display:flex;justify-content:space-between;letter-spacing:.04em;background:#1d1622}
+.shot{position:relative;cursor:crosshair}
+.shot img{width:100%;height:auto}
+.shot .hit{position:absolute;border:0;background:transparent;padding:0;cursor:crosshair}
+.shot .box{position:absolute;border:4px solid #E0464B;border-radius:6px;box-shadow:0 0 0 3px rgba(255,255,255,.8);animation:pop .5s ease-out;pointer-events:none}
+.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes pop{from{opacity:0;transform:scale(1.8)}to{opacity:1;transform:scale(1)}}
+
+/* level 2 */
+.l2top{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:760px){.l2top{grid-template-columns:230px minmax(0,1fr)}}
+.silcam{border:3px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:4px 4px 0 var(--ink);background:#1d1622;align-self:start}
+.silcam .view{position:relative;background:#B7B3C2;display:grid;place-items:center;padding:10px}
+.silcam .view::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 2px,transparent 2px 4px);pointer-events:none}
+.silcam .view img{max-height:300px;width:auto;max-width:100%;filter:blur(1.2px) contrast(1.2) brightness(.7);mix-blend-mode:multiply}
+.witness{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));align-content:start}
+.tcard{border:3px solid var(--ink);border-radius:12px;background:var(--card);box-shadow:3px 3px 0 var(--ink);overflow:hidden;display:grid}
+.tcard img{width:100%;aspect-ratio:1/1;object-fit:cover;object-position:center;border-bottom:2.5px solid var(--ink)}
+.tcard .tx{padding:8px 10px;display:grid;gap:2px}
+.tcard .who{font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--plum)}
+.tcard .say{font-size:1rem;font-weight:900;line-height:1.3}
+.tcard.wait{border-style:dashed;box-shadow:none;place-items:center;min-height:150px;color:var(--muted);font-weight:900;background:repeating-linear-gradient(45deg,var(--card) 0 10px,#EEF3FB 10px 20px)}
+.people{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+.person{position:relative;border:3px solid var(--ink);border-radius:12px;background:#fff;box-shadow:3px 3px 0 var(--ink);cursor:pointer;padding:0;overflow:hidden;transition:transform .12s,opacity .12s}
+.person img{width:100%;height:auto}
+.person .cm{font-family:var(--cam);font-size:.95rem;color:var(--muted);background:var(--card);border-top:2px solid var(--ink);padding:1px 0}
+.person[aria-pressed="true"]{opacity:.5;transform:rotate(-3deg) scale(.96)}
+.person[aria-pressed="true"]::after{content:"Set aside";position:absolute;top:40%;left:50%;transform:translate(-50%,-50%) rotate(-14deg);font-family:var(--display);font-size:1.2rem;border:3px solid #A3262B;color:#A3262B;padding:0 8px;border-radius:6px;background:rgba(255,253,246,.88)}
+.person.owner{outline:5px solid var(--l2);outline-offset:2px}
+.pile{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--muted)}
+.ask{padding:16px 18px;display:grid;gap:12px}
+.ask .q{font-family:var(--display);font-size:1.5rem}
+.envs{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:8px 0}
+.env{width:92px;height:62px;border:3px solid var(--ink);border-radius:6px;position:relative;box-shadow:3px 3px 0 var(--ink)}
+.env::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom right,transparent 49%,var(--ink) 49% 52%,transparent 52%),linear-gradient(to bottom left,transparent 49%,var(--ink) 49% 52%,transparent 52%);background-size:100% 60%;background-repeat:no-repeat}
+
+/* boards (levels 3 and 4) */
+.l3{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:1000px){.l3{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}}
+.board{border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);background:var(--card);overflow:auto;align-self:start}
+.board svg{display:block;width:100%;min-width:640px;height:auto}
+.ctr{transition:transform .32s ease-in-out}
+.ctr .arrow{transition:transform .25s}
+.ctr.bump{animation:bump .45s}
+@keyframes bump{30%{opacity:.3}60%{opacity:1}80%{opacity:.4}}
+.tilehit{cursor:pointer}
+.pulse{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.side{display:grid;gap:14px;align-content:start}
+.box{padding:14px 16px;display:grid;gap:10px}
+.box h3{font-size:1.2rem}
+.palette{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mcard{position:relative;border:0;background:none;padding:0;display:grid;justify-items:center;gap:4px;cursor:pointer;font-weight:900;font-size:.8rem;line-height:1.1}
+.mcard img{width:100%;max-width:74px;border-radius:8px;box-shadow:3px 3px 0 var(--ink);transition:transform .25s}
+.mcard .ct{position:absolute;top:-8px;right:-4px;background:var(--card);border:2px solid var(--ink);border-radius:999px;font-size:.75rem;padding:0 6px;font-variant-numeric:tabular-nums}
+.mcard:disabled{opacity:.4;cursor:not-allowed}
+.strip{display:flex;flex-wrap:wrap;gap:6px;min-height:62px;padding:8px;border:2.5px dashed #F08A2B;border-radius:12px;align-content:flex-start;background:#FFF6EC}
+.strip .empty{color:var(--muted);font-weight:800;align-self:center}
+.strip .startc{width:46px;height:46px;border-radius:6px}
+.pcard{border:0;background:none;width:46px;height:46px;position:relative;cursor:pointer;padding:0}
+.pcard img{width:46px;height:46px;border-radius:6px;transition:transform .25s}
+.pcard .i{position:absolute;bottom:-3px;left:-3px;font-size:.62rem;font-weight:900;background:var(--card);border:1.5px solid var(--ink);border-radius:999px;padding:0 4px;line-height:1.3}
+.pcard.now{transform:translateY(-4px)}
+.pcard.now img{box-shadow:0 0 0 3px var(--ink)}
+.facing{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.facing button{width:38px;height:38px;border:2.5px solid var(--ink);border-radius:10px;background:var(--card);display:grid;place-items:center;cursor:pointer;padding:0}
+.facing button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.facing svg{width:20px;height:20px}
+.clues{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.clue{border-radius:10px;overflow:hidden;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);aspect-ratio:3/4;background:#8CCB2E repeating-linear-gradient(45deg,transparent 0 8px,rgba(42,21,56,.12) 8px 16px);display:grid;place-items:center;font-family:var(--display);font-size:1.8rem;color:var(--ink)}
+.clue img{width:100%;height:100%;object-fit:cover}
+.toggle{display:flex;gap:8px;align-items:center;font-weight:800;font-size:.92rem;cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--plum)}
+
+/* level 4 */
+.tokens{display:flex;gap:10px;flex-wrap:wrap}
+.tok{position:relative;width:54px}
+.tok img{width:54px;border-radius:6px}
+.tok b{position:absolute;bottom:-6px;right:-6px;background:var(--card);border:2px solid var(--ink);border-radius:999px;font-size:.8rem;padding:0 7px;font-variant-numeric:tabular-nums}
+.tok.zero img{opacity:.3;filter:grayscale(1)}
+.diebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.die{width:68px;height:68px;border:3px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:3px 3px 0 var(--ink)}
+.die svg{width:100%;height:100%;display:block}
+.lookfor{display:flex;gap:12px;align-items:center}
+.lookfor img{width:76px;border:2.5px solid var(--ink);border-radius:10px;flex:none}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(42,21,56,.6);display:grid;place-items:center;padding:16px;overflow:auto;z-index:20}
+.modal{width:min(620px,100%);overflow:hidden}
+.modal.wide{width:min(980px,100%)}
+.modal .band{background:var(--mc,var(--sun));border-bottom:3px solid var(--ink);padding:14px 18px}
+.modal .band h3{font-size:1.6rem}
+.modal .body{padding:18px;display:grid;gap:14px}
+.quizimg{width:100%;height:auto;border-radius:10px;border:2px solid #ddd}
+.answer{border:3px dashed var(--ink);border-radius:12px;padding:12px 14px;background:#FFF8DA;display:grid;gap:8px}
+.answer .key{font-family:var(--display);font-size:1.6rem;letter-spacing:.02em;word-break:break-word}
+.answer img{max-width:100%;max-height:300px;width:auto;border-radius:8px;background:#fff}
+.bigclue{width:min(200px,60%);margin:0 auto;border-radius:12px;box-shadow:4px 4px 0 var(--ink);border:3px solid var(--ink)}
+.algo{margin:0;padding-left:1.4em;display:grid;gap:2px;font-size:1.1rem;font-weight:800}
+
+/* win */
+.win{padding:clamp(20px,4vw,40px);display:grid;gap:18px;text-align:center;justify-items:center;background:var(--sun)}
+.win h2{font-size:clamp(2.4rem,7vw,4rem)}
+.win .pair{display:flex;gap:16px;align-items:end;justify-content:center}
+.win .pair .p{width:150px;border:3px solid var(--ink);border-radius:12px;overflow:hidden}
+.win .pair .t{width:110px}
+.skills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const R = n => Math.floor(Math.random() * n);
+const pick = a => a[R(a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = R(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const key = (x, y) => x + ',' + y;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function speak(text) {
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-GB'; u.rate = 0.92;
+    const v = speechSynthesis.getVoices().find(v => v.lang === 'en-GB'); if (v) u.voice = v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+const ICON = {
+  up: '<path d="M12 20V4M5 11l7-7 7 7"/>', down: '<path d="M12 4v16M5 13l7 7 7-7"/>',
+  left: '<path d="M20 12H4M11 5l-7 7 7 7"/>', right: '<path d="M4 12h16M13 5l7 7-7 7"/>',
+  speak: '<path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>'
+};
+const ico = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+
+/* ---------- toys ---------- */
+const TOYS = { bear: 'teddy bear', bunny: 'toy bunny', car: 'toy car', dino: 'toy dinosaur', mouse: 'wind-up mouse', rocket: 'toy rocket', soldier: 'toy soldier', top: 'spinning top' };
+const toyImg = t => `ui/toy_${t}.png`;
+
+/* ---------- Level 1 data: 24 museum cards (toy, hard, box of the toy in the closing-time photo as fractions) ---------- */
+const L1CARDS = [["bear",false,[0.0712,0.8548,0.1222,0.9722]],["car",false,[0.0438,0.0009,0.1053,0.05]],["mouse",true,[0.6266,0.8706,0.6841,0.9177]],["bear",true,[0.4748,0.1684,0.5317,0.2155]],["top",false,[0.7737,0.9214,0.8267,0.9926]],["top",false,[0.0706,0.7336,0.1086,0.815]],["dino",true,[0.8561,0.198,0.9182,0.2831]],["soldier",true,[0.83,0.358,0.8587,0.4468]],["rocket",false,[0.312,0.0055,0.3859,0.0471]],["bunny",false,[0.9333,0.5495,0.966,0.6475]],["top",true,[0.7502,0.7391,0.7809,0.7854]],["car",true,[0.4964,0.2237,0.5625,0.2773]],["soldier",false,[0.6723,0.6617,0.7129,0.7375]],["mouse",false,[0.121,0.7957,0.1746,0.866]],["top",true,[0.7515,0.6063,0.7783,0.647]],["bunny",true,[0.5023,0.593,0.552,0.7197]],["rocket",false,[0.6534,0.4889,0.6867,0.573]],["mouse",false,[0.7744,0.7819,0.8018,0.8383]],["car",true,[0.9516,0.8115,1.0,0.8799]],["dino",true,[0.7011,0.4094,0.7469,0.4982]],["rocket",false,[0.7135,0.5527,0.7456,0.6534]],["dino",false,[0.0347,0.5665,0.0615,0.6405]],["soldier",true,[0.002,0.6155,0.034,0.6682]],["bunny",true,[0.9398,0.7495,1.0,0.8272]]];
+const ROOMS = ['Dinosaur Hall', 'Dinosaur Hall', 'Dinosaur Hall', 'Dinosaur Hall', 'Art Gallery', 'Art Gallery', 'Art Gallery', 'Art Gallery', 'Space Room', 'Space Room', 'Space Room', 'Space Room', 'Sports Hall', 'Sports Hall', 'Sports Hall', 'Sports Hall', 'Computer Room', 'Computer Room', 'Computer Room', 'Computer Room', 'Ocean Room', 'Ocean Room', 'Ocean Room', 'Ocean Room'];
+
+/* ---------- Level 2 data ---------- */
+const ITEMS = ['glasses', 'flower', 'camera', 'headphones'];
+const SAY = { glasses: 'The owner was wearing glasses.', flower: 'The owner had a flower.', camera: 'The owner had a camera.', headphones: 'The owner was wearing headphones.' };
+const PEOPLE = [
+  { id: 'sam', name: 'Sam', sil: 'puffy', lacks: 'camera' }, { id: 'jordy', name: 'Jordy', sil: 'puffy', lacks: 'headphones' },
+  { id: 'maria', name: 'Maria', sil: 'puffy', lacks: 'glasses' }, { id: 'iggy', name: 'Iggy', sil: 'puffy', lacks: 'flower' },
+  { id: 'zane', name: 'Zane', sil: 'round', lacks: 'headphones' }, { id: 'charlie', name: 'Charlie', sil: 'round', lacks: 'camera' },
+  { id: 'drew', name: 'Drew', sil: 'round', lacks: 'flower' }, { id: 'noah', name: 'Noah', sil: 'round', lacks: 'glasses' },
+  { id: 'alex', name: 'Alex', sil: 'spiky', lacks: 'camera' }, { id: 'pat', name: 'Pat', sil: 'spiky', lacks: 'flower' },
+  { id: 'ali', name: 'Ali', sil: 'spiky', lacks: 'headphones' }, { id: 'leli', name: 'Leli', sil: 'spiky', lacks: 'glasses' }
+];
+const WITNESSES = ['The museum guard', 'A girl at the gift shop', 'The man at the café', 'A teacher on a school trip', 'The lady at the ticket desk'];
+const person = id => PEOPLE.find(p => p.id === id);
+
+/* ---------- Level 3 data: city map grid (P road, E building entrance, B roadworks) ---------- */
+const CITY = ["........PEPPPPBPPP...", "PEPP....P..P.....PPEP", "P..P....P..P.....P..P", "P..PBPPEPPPPPEP..P..E", "E..P..P....P..PPEPBPP", "P..P..P....P.....P...", "PBPP..PPPEBPPPPPPP...", "...P..P....P.....B...", "...PPEP....P.....E...", "......P....PPPPPPP...", "......PBPEPP........."];
+const CW = 21, CH = 11, CX0 = 173, CY0 = 226, CP = 59.95;
+const BUILDINGS = { '9,0': [312, 'orange'], '1,1': [123, 'blue'], '19,1': [321, 'orange'], '7,3': [231, 'blue'], '13,3': [321, 'blue'], '20,3': [312, 'blue'], '0,4': [132, 'blue'], '16,4': [132, 'orange'], '9,6': [123, 'orange'], '5,8': [231, 'orange'], '17,8': [213, 'blue'], '9,10': [213, 'orange'] };
+const START3 = { x: 13, y: 6 };
+const cell = (x, y) => (y >= 0 && y < CH && x >= 0 && x < CW) ? CITY[y][x] : '.';
+const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0], DIRNAME = ['up', 'right', 'down', 'left'];
+const CARDINFO = { forward: { label: 'Move', max: 15 }, right: { label: 'Turn right', max: 3 }, left: { label: 'Turn left', max: 3 }, jump: { label: 'Jump', max: 3 } };
+
+/* ---------- Level 4 data: floor plan ---------- */
+const FW = 13, FH = 7, FX0 = 158, FY0 = 226, FPX = 98.2, FPY = 98;
+const onFloor = (x, y) => x >= 0 && y >= 0 && x < FW && y < FH && (y === 0 || y === 6 || y === 3 || x === 0 || x === 12 || x === 6);
+const MTILES = { '2,0': 'red', '9,0': 'blue', '0,1': 'yellow', '12,1': 'red', '0,4': 'green', '3,6': 'yellow', '8,6': 'blue', '11,6': 'green' };
+const DOOR_COLS = ['red', 'yellow', 'blue', 'green'];
+const DOORS = { red: { x: 6, y: 0 }, yellow: { x: 0, y: 3 }, blue: { x: 12, y: 3 }, green: { x: 6, y: 6 } };
+const TOKC = { red: '#E0464B', yellow: '#F5C22B', green: '#2DAA5A', blue: '#5468E8' };
+const ANSWERS = { 1: '2C · 3A · 1B', 2: '4', 3: '5', 4: '2', 5: '1', 6: '3', 7: '1', 8: '2', 9: '1', 10: '2', 11: '1', 12: '1', 13: '3', 14: '1B · 2C · 3A', 15: '1C · 2A · 3B', 16: 'Sport, feathers, marine, metal, animals, motion, lightweight, black and white dots', 17: '4', 18: '1', 19: '1', 20: '3', 21: '1', 22: '2', 23: '1', 24: '3', 25: '1', 26: '1-1', 27: '1-3-2', 28: '2-3-1', 29: '2-3-3', 30: '3-2', 31: '1-2', 32: 'ULLU', 33: 'ULLUULL', 34: 'ULLUU', 35: 'ULLULL', 36: 'LLLLU', 37: 'ON-OFF', 38: 'ON-ON', 39: 'ON-OFF-OFF', 40: 'OFF-ON', 41: 'ON-ON', 42: '1 Glass · 2 E-waste · 3 Paper · 4 Metal · 5 Organic · 6 Plastic', 43: '1 Metal · 2 Paper · 3 Glass · 4 Plastic · 5 Organic · 6 E-waste', 44: '1 Plastic · 2 Organic · 3 Metal · 4 Paper · 5 Glass · 6 E-waste', 45: '1 Plastic · 2 Organic · 3 Metal · 4 Paper · 5 E-waste · 6 Glass', 46: '1 Organic · 2 E-waste · 3 Glass · 4 Metal · 5 Plastic · 6 Paper', 47: '1B · 2D · 3C · 4A', 48: '1C · 2A · 3D · 4B', 49: '1D · 2B · 3E · 4A · 5C', 50: '1E · 2A · 3D · 4C · 5B', 51: '2', 56: '4-1-2-3', 57: '5-1-3-4-2', 58: '5-(3-4-1)-2-6', 59: '5-6-3-2-1-4', 60: '7-6-5-2-3-4-1', 61: '3', 62: '4', 63: '4', 64: '2', 65: '2', 66: '1', 67: '4', 68: '3' };
+const SOLIMG = [7, 8, 9, 10, 11, 52, 53, 54, 55, 69, 70, 71, 72, 73, 74, 75];
+const ANSNOTE = { 58: 'The cards in brackets, and the last two, can come in a different order.', 59: 'The last card can come in a different order.' };
+
+const LEVELS = [
+  { name: 'The lost toy', colour: 'var(--l1)', skills: ['Decomposition', 'Pattern recognition', 'Abstraction'],
+    letter: ['Dear Detective Goodeye,', 'I reach out to you in a time of need. Yesterday a child visiting the museum left behind a toy. We need your help to find it and to return it to its rightful owner.'], sign: 'Yours truly, Professor Wright, Museum Director',
+    story: 'Professor Wright has provided you with two images of the room where the toy was lost: one just before the Museum opened that day, the other just before closing time. Can you see similarities and differences between the two images and identify the missing toy?',
+    notes: ['The two photos on each card show the same room before the museum opened and just before closing time.', 'There are 12 easy and 12 hard cards. Start with easy cards and move to hard ones as children grow in confidence.', 'In the printed game three groups race to find their toy first. Here the class plays one card together; tap New card for more practice.', 'The toy you find becomes your counter for Levels 3 and 4.', 'This level covers decomposition, pattern recognition and abstraction.'] },
+  { name: 'Shadows on camera', colour: 'var(--l2)', skills: ['Decomposition', 'Pattern recognition', 'Abstraction'],
+    story: 'Professor Wright has arranged for you to see the footage of the Museum security camera to help you identify the toy’s owner. Unfortunately, the light in the room was not perfect and only a shadow could be seen. Mr Wright was helpful enough to provide images from the Museum entrance. These images are clear. Mr Wright has also provided some testimonies from the other people at the Museum. Do you think you can identify the right child based on the shadow?',
+    notes: ['The camera inside the museum delivers poor images because of bad lighting. The entrance cameras have good lighting, so they show more detail.', 'Children should set aside 8 of the 12 entrance cards, keeping the 4 that match the shadow.', 'Each testimony card shows something a visitor remembers about the owner: glasses, a flower, a camera or headphones. Sunglasses count as glasses.', 'After each testimony, ask: do you need another card to identify the owner?', 'At the end, the owner’s card goes into one of four coloured envelopes, ready for Level 4.'] },
+  { name: 'Across the city', colour: 'var(--l3)', skills: ['Decomposition', 'Abstraction', 'Algorithmic thinking'],
+    story: 'Mr Wright has provided a city plan to help you identify the owner’s house so you can return the toy. It is not an easy task, so you should get to the clues marked as museum icons. Use your Movement cards in order to travel around the city. Are you up to it?',
+    notes: ['Before play, place the three museum tiles on the map. Tap Shuffle for a random layout, or tap three road squares of your choice. Placing them far apart works best.', 'The toy starts on START facing left. Move cards (the arrow) move it one square in the direction of travel. Turn right and turn left make a 90° turn and move ahead one square. Jump hops over roadworks and lands on the next square.', 'The toy can only drive on the road. If it would leave the road or hit roadworks, it goes back to where that algorithm started and the cards stay, so the class can debug them.', 'Reaching museum tiles 1 and 2 draws number cards; museum tile 3 draws a colour card. Number clues count in the order they were picked, and the third digit is the one left over.', 'Finish by driving to the entrance square of the right building, marked by the small arrow beside it.'] },
+  { name: 'Knock, knock!', colour: 'var(--l4)', skills: ['Decomposition', 'Pattern recognition', 'Abstraction', 'Algorithmic thinking'],
+    story: 'Finding the right building isn’t enough! Inside each building there are several apartments. Now it’s time to find the apartment where the owner lives. Let’s go knocking on some doors!',
+    notes: ['Roll the die and move the toy that many squares. It cannot turn back on itself; where the path splits, tap the square you want.', 'Stop on a coloured museum tile to draw a quiz card. If answered correctly, the card leaves the game and the team wins a token of that colour. A wrong answer or a pass sends the card to the bottom of the deck.', 'Tap Show answer to see the answer key; you decide whether the class got it right.', 'To knock on a door, the team needs four different coloured tokens. Stand on the tile facing the door and pay one token of that door’s colour.', 'Landing on the teleport tile in the centre with four different tokens lets the toy move straight to any door.'] }
+];
+
+/* ---------- state ---------- */
+let S;
+function freshState() { return { v: 2, screen: 'title', level: 0, hard: false, check: true, toy: null, owner: null, ownerDoor: null, l1: null, l2: null, l3: null, l4: null, done: [false, false, false, false], modal: null, seen1: [] }; }
+
+/* ---------- Level 1 ---------- */
+function newL1() {
+  const pool = L1CARDS.map((c, i) => i).filter(i => L1CARDS[i][1] === S.hard);
+  let fresh = pool.filter(i => !S.seen1.includes(i)); if (!fresh.length) { S.seen1 = []; fresh = pool; }
+  const n = pick(fresh); S.seen1.push(n);
+  return { n, found: false, misses: 0, flash: 0 };
+}
+function shot(l1, closing) {
+  const [toy, , b] = L1CARDS[l1.n], num = String(l1.n + 1).padStart(2, '0');
+  const w = Math.max(b[2] - b[0], 0.07), h = Math.max(b[3] - b[1], 0.1);
+  const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+  const hx = Math.min(Math.max(cx - w / 2 - 0.015, 0), 1 - w - 0.03), hy = Math.min(Math.max(cy - h / 2 - 0.02, 0), 1 - h - 0.04);
+  const pos = `left:${hx * 100}%;top:${hy * 100}%;width:${(w + 0.03) * 100}%;height:${(h + 0.04) * 100}%`;
+  return `<div class="shot" data-act="l1miss"><img src="l1/c${num}_${closing ? 'close' : 'morning'}.jpg" alt="${closing ? 'Just before closing time' : 'Before the museum opened'}, ${ROOMS[l1.n]}">
+    ${l1.found ? `<div class="box" style="${pos}"></div>` : `<button class="hit" data-act="l1hit" style="${pos}" aria-label="Lost toy"></button>`}</div>`;
+}
+function viewL1() {
+  const l1 = S.l1, [toy, hard, b] = L1CARDS[l1.n];
+  const where = (b[1] + b[3]) / 2 < 0.5 ? 'top' : 'bottom', side = (b[0] + b[2]) / 2 < 0.5 ? 'left' : 'right';
+  const msg = l1.found ? `<p class="msg good">You found it! Someone left a ${TOYS[toy]} behind.</p>`
+    : l1.misses >= 3 ? `<p class="msg bad">Hint: look near the ${where} ${side} of the photos.</p>`
+    : l1.misses ? '<p class="msg bad">Look again. That looks the same in both photos.</p>' : '<p class="msg"></p>';
+  return `
+  <div class="playhead"><div><p class="eyebrow">Level 1 · ${ROOMS[l1.n]} · ${hard ? 'Hard' : 'Easy'} card</p><h2>Find the missing toy</h2></div>
+    <div class="row"><button class="btn ghost small" data-act="l1new">New card</button></div></div>
+  <p class="task">Compare the two photos. One toy is in one photo but not the other. Tap it!</p>
+  <div class="photos ${l1.flash ? 'shake' : ''}">
+    <div class="cam"><div class="camlab"><span>CAM 1 · BEFORE OPENING</span><span>08:55</span></div>${shot(l1, false)}</div>
+    <div class="cam"><div class="camlab"><span>CAM 1 · BEFORE CLOSING</span><span>17:58</span></div>${shot(l1, true)}</div>
+  </div>
+  ${msg}
+  ${l1.found ? `<div class="row"><span class="chip"><img src="${toyImg(toy)}" alt=""> Your counter: ${TOYS[toy]}</span><button class="btn lv" data-act="finish" data-arg="0">Finish Level 1</button></div>` : ''}`;
+}
+
+/* ---------- Level 2 ---------- */
+function newL2() {
+  const sil = pick(['puffy', 'round', 'spiky']);
+  const group = PEOPLE.filter(p => p.sil === sil), owner = pick(group);
+  const order = shuffle(ITEMS.filter(i => i !== owner.lacks));
+  const time = () => `${10 + R(6)}:${String(R(60)).padStart(2, '0')}`;
+  return { sil, owner: owner.id, order, cards: shuffle(PEOPLE.map(p => p.id)).map(id => ({ id, cam: 1 + R(3), time: time() })), witnesses: shuffle(WITNESSES).slice(0, 3), shown: 0, phase: 'sort', aside: {}, msg: '', msgType: '', camTime: `${12 + R(5)}:${String(R(60)).padStart(2, '0')}` };
+}
+function failsAt(id, l2) {
+  const p = person(id); if (p.sil !== l2.sil) return 0;
+  for (let k = 0; k < 3; k++) if (p.lacks === l2.order[k]) return k + 1;
+  return 4;
+}
+function viewL2() {
+  const l2 = S.l2, lim = l2.phase === 'sort' ? l2.shown - 1 : l2.shown;
+  const visible = l2.cards.filter(c => failsAt(c.id, l2) > lim);
+  const piled = l2.cards.length - visible.length, owner = person(l2.owner);
+  const tcards = [0, 1, 2].map(k => k < l2.shown
+    ? `<div class="tcard"><img src="l2/t_${l2.order[k]}.jpg" alt="${l2.order[k]}"><div class="tx"><span class="who">Testimony ${k + 1} · ${l2.witnesses[k]}</span><span class="say">“${SAY[l2.order[k]]}”</span></div></div>`
+    : `<div class="tcard wait">Testimony ${k + 1}</div>`).join('');
+  let task = '';
+  if (l2.phase === 'sort') task = l2.shown === 0 ? 'Compare each entrance photo with the shadow from the museum camera. Tap everyone who does NOT match the shadow to set them aside. Then press Check.'
+    : `Read testimony ${l2.shown}. Tap everyone who does NOT fit what the visitor saw. Then press Check.`;
+  let bottom = '';
+  if (l2.phase === 'sort') bottom = `<div class="row"><button class="btn lv" data-act="l2check">Check</button>${piled ? `<span class="pile">${piled} people already set aside</span>` : ''}</div><p class="msg ${l2.msgType}">${esc(l2.msg)}</p>`;
+  else if (l2.phase === 'ask') bottom = `<div class="panel ask"><p class="q">Do you need another card to identify the owner?</p><p>${visible.length} people still match every clue so far.</p>
+      <div class="row"><button class="btn lv" data-act="l2more">Yes, show the next testimony</button><button class="btn ghost" data-act="l2nomore">No, we know who it is</button></div><p class="msg ${l2.msgType}">${esc(l2.msg)}</p></div>`;
+  else bottom = `<div class="panel ask"><p class="q">It’s ${owner.name}!</p><p>${owner.name} left the ${TOYS[S.toy]} at the museum. The teacher now places ${owner.name}’s entrance card in one of the four coloured envelopes and a blank card in each of the other three. They will be hidden behind the doors in Level 4.</p>
+      <div class="envs">${DOOR_COLS.map(c => `<div class="env" style="background:${TOKC[c]}" title="${c} envelope"></div>`).join('')}</div>
+      <div class="row"><button class="btn lv" data-act="finish" data-arg="1">Finish Level 2</button></div></div>`;
+  return `
+  <div class="playhead"><div><p class="eyebrow">Level 2 · Who left the ${TOYS[S.toy]}?</p><h2>Shadows on camera</h2></div>
+    <span class="chip"><img src="${toyImg(S.toy)}" alt=""> ${cap(TOYS[S.toy])}</span></div>
+  <div class="l2top">
+    <div class="silcam"><div class="camlab"><span>CAM 2</span><span>${l2.camTime}</span></div><div class="view"><img src="l2/sil_${l2.sil}.png" alt="Shadow of the owner from the museum camera"></div></div>
+    <div class="witness">${tcards}</div>
+  </div>
+  ${task ? `<p class="task">${task}</p>` : ''}
+  <div class="people">${visible.map(c => { const p = person(c.id); return `
+    <button class="person ${l2.phase === 'done' && c.id === l2.owner ? 'owner' : ''}" data-act="l2tap" data-arg="${c.id}" aria-pressed="${!!l2.aside[c.id]}" ${l2.phase !== 'sort' ? 'disabled style="cursor:default"' : ''} aria-label="${p.name}">
+      <img src="l2/${p.id}.jpg" alt=""><div class="cm">ENTRANCE CAM ${c.cam} · ${c.time}</div></button>`; }).join('')}</div>
+  ${bottom}`;
+}
+
+/* ---------- Level 3 ---------- */
+function roadTiles() { const t = []; for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) if (CITY[y][x] === 'P' && !(x === START3.x && y === START3.y)) t.push({ x, y }); return t; }
+const md = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+function randomMuseums() {
+  const t = roadTiles();
+  for (let i = 0; i < 500; i++) {
+    const m = []; for (const p of shuffle(t)) { if (md(p, START3) >= 5 && m.every(q => md(p, q) >= 7)) m.push({ ...p, done: false }); if (m.length === 3) break; }
+    if (m.length === 3) return m;
+  }
+  return shuffle(t).slice(0, 3).map(p => ({ ...p, done: false }));
+}
+function newL3() {
+  const d = shuffle([1, 2, 3]);
+  return { museums: randomMuseums(), placeNext: 0, setup: true, digits: d, colour: pick(['blue', 'orange']), pos: { ...START3, d: 3 }, prog: [], clues: [], running: false, msg: '', msgType: '' };
+}
+const answer3 = l3 => ({ num: l3.digits[0] * 100 + l3.digits[1] * 10 + l3.digits[2], colour: l3.colour });
+function headings(l3) { let d = l3.pos.d; return l3.prog.map(c => { if (c === 'right') d = (d + 1) % 4; if (c === 'left') d = (d + 3) % 4; return d; }); }
+const rot = d => (d - 1) * 90;
+function mapSVG(l3) {
+  let g = `<image href="l3/citymap.jpg" x="0" y="0" width="1600" height="1109"/>`;
+  l3.museums.forEach((m, i) => {
+    if (m.done) return;
+    const X = CX0 + m.x * CP, Y = CY0 + m.y * CP;
+    g += `<g><rect x="${X + 3}" y="${Y + 3}" width="${CP - 6}" height="${CP - 6}" rx="6" fill="#fff"/><image href="l3/museum.png" x="${X + 3}" y="${Y + 3}" width="${CP - 6}" height="${CP - 6}"/>${l3.setup ? `<circle cx="${X + CP - 6}" cy="${Y + 8}" r="11" fill="#2A1538"/><text x="${X + CP - 6}" y="${Y + 13}" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="15" fill="#fff">${i + 1}</text>` : ''}</g>`;
+  });
+  if (l3.setup) {
+    for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) if (CITY[y][x] === 'P' && !(x === START3.x && y === START3.y))
+      g += `<rect class="tilehit" data-act="l3place" data-arg="${x},${y}" x="${CX0 + x * CP}" y="${CY0 + y * CP}" width="${CP}" height="${CP}" fill="#fff" fill-opacity="0"/>`;
+  }
+  g += counterG(l3.pos, CX0, CY0, CP, CP, true);
+  return `<svg viewBox="0 0 1600 1109" role="img" aria-label="City map">${g}</svg>`;
+}
+function counterG(p, x0, y0, pw, ph, arrow) {
+  const r = Math.min(pw, ph) * 0.46, cx = pw / 2, cy = ph / 2;
+  return `<g id="ctr" class="ctr" style="transform:translate(${x0 + p.x * pw}px,${y0 + p.y * ph}px)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFDF6" stroke="#2A1538" stroke-width="4"/>${arrow ? `<g class="arrow" style="transform-origin:${cx}px ${cy}px;transform:rotate(${p.d * 90}deg)"><path d="M${cx - 9} ${cy - r + 2} L${cx} ${cy - r - 11} L${cx + 9} ${cy - r + 2}Z" fill="#2A1538"/></g>` : ''}<image href="${toyImg(S.toy)}" x="${cx - r * 0.78}" y="${cy - r * 0.78}" width="${r * 1.56}" height="${r * 1.56}"/></g>`;
+}
+function viewL3() {
+  const l3 = S.l3, used = c => l3.prog.filter(x => x === c).length, hd = headings(l3);
+  const clueCards = [0, 1, 2].map(i => {
+    const c = l3.clues[i];
+    if (c === undefined) return `<div class="clue" aria-label="Clue ${i + 1}, not found yet">?</div>`;
+    return `<div class="clue"><img src="l3/${typeof c === 'number' ? 'n' + c : c}.png" alt="${typeof c === 'number' ? 'Number ' + c : cap(c)}"></div>`;
+  }).join('');
+  const setupBox = `<div class="panel box"><h3>Set up the map</h3><p>Place the three museum tiles on the road. Tap any road square to move museum tile ${l3.placeNext + 1}, or shuffle them. Place them far apart.</p>
+      <div class="row"><button class="btn ghost small" data-act="l3shuffle">Shuffle</button><button class="btn lv" data-act="l3begin">Start driving</button></div></div>`;
+  const playBox = `
+      <div class="panel box">
+        <h3>1. Which way is the toy facing?</h3>
+        <div class="facing">${[0, 1, 2, 3].map(d => `<button data-act="l3face" data-arg="${d}" aria-pressed="${l3.pos.d === d}" aria-label="Face ${DIRNAME[d]}" ${l3.running ? 'disabled' : ''}>${ico(DIRNAME[d])}</button>`).join('')}<span style="font-weight:800">Facing ${DIRNAME[l3.pos.d]}</span></div>
+        <h3>2. Build the algorithm</h3>
+        <div class="palette">${Object.keys(CARDINFO).map(c => `<button class="mcard" data-act="l3add" data-arg="${c}" ${l3.running || used(c) >= CARDINFO[c].max ? 'disabled' : ''}><img src="l3/${c}.png" alt="" ${c === 'forward' ? `style="transform:rotate(${rot(hd.length ? hd[hd.length - 1] : l3.pos.d)}deg)"` : ''}>${CARDINFO[c].label}<span class="ct">${CARDINFO[c].max - used(c)}</span></button>`).join('')}</div>
+        <div class="strip" id="strip"><img class="startc" src="l3/start.png" alt="Start">${l3.prog.length ? l3.prog.map((c, i) => `<button class="pcard" data-act="l3remove" data-arg="${i}" aria-label="Step ${i + 1}: ${CARDINFO[c].label}. Tap to remove" ${l3.running ? 'disabled' : ''}><img src="l3/${c}.png" alt="" ${c === 'forward' ? `style="transform:rotate(${rot(hd[i])}deg)"` : ''}><span class="i">${i + 1}</span></button>`).join('') : '<span class="empty">Tap the cards above to lay out your algorithm. Tap a card here to take it back.</span>'}</div>
+        <div class="row"><button class="btn lv" data-act="l3run" ${l3.running || !l3.prog.length ? 'disabled' : ''}>Run</button><button class="btn ghost small" data-act="l3clear" ${l3.running || !l3.prog.length ? 'disabled' : ''}>Clear</button></div>
+        <label class="toggle"><input type="checkbox" id="teachercheck" data-act="l3toggle" ${S.check ? 'checked' : ''}> Teacher checks each algorithm before it runs</label>
+        <p class="msg ${l3.msgType}" id="l3msg">${esc(l3.msg)}</p>
+      </div>
+      <div class="panel box"><h3>Clue cards</h3><div class="clues">${clueCards}</div>
+        <p class="hint">Museum tiles 1 and 2 give number cards. Museum tile 3 gives a colour card.</p></div>`;
+  return `
+  <div class="playhead"><div><p class="eyebrow">Level 3 · Find where ${person(S.owner).name} lives</p><h2>Across the city</h2></div>
+    <div class="row">${!l3.setup ? `<button class="btn ghost small" data-act="l3restart" ${l3.running ? 'disabled' : ''}>Start again</button>` : ''}</div></div>
+  <div class="l3"><div class="board">${mapSVG(l3)}</div><div class="side">${l3.setup ? setupBox : playBox}</div></div>`;
+}
+function describe(l3) { const hd = headings(l3); return `<p style="font-weight:800">Start facing ${DIRNAME[l3.pos.d]}.</p><ol class="algo">${l3.prog.map((c, i) => `<li>${c === 'forward' ? `Move ${DIRNAME[hd[i]]}` : CARDINFO[c].label}</li>`).join('')}</ol>`; }
+function simulate(l3) {
+  let { x, y, d } = l3.pos; const frames = [];
+  for (let i = 0; i < l3.prog.length; i++) {
+    const c = l3.prog[i];
+    if (c === 'right') d = (d + 1) % 4;
+    if (c === 'left') d = (d + 3) % 4;
+    const st = c === 'jump' ? 2 : 1, nx = x + DX[d] * st, ny = y + DY[d] * st, t = cell(nx, ny);
+    if (c === 'jump' && cell(x + DX[d], y + DY[d]) === '.') { frames.push({ x, y, d, i, fail: 'off' }); return frames; }
+    if (t === '.') { frames.push({ x, y, d, i, fail: 'off' }); return frames; }
+    if (t === 'B') { frames.push({ x, y, d, i, fail: 'barrier' }); return frames; }
+    x = nx; y = ny; frames.push({ x, y, d, i });
+  }
+  return frames;
+}
+function runL3() {
+  const l3 = S.l3, frames = simulate(l3), startPos = { ...l3.pos };
+  l3.running = true; S.modal = null; l3.msg = 'Running…'; l3.msgType = ''; render();
+  let f = 0;
+  const tick = () => {
+    const fr = frames[f], el = document.getElementById('ctr');
+    document.querySelectorAll('.pcard').forEach((p, i) => p.classList.toggle('now', !!fr && i === fr.i));
+    if (!fr) return finishRun();
+    if (el) { el.style.transform = `translate(${CX0 + fr.x * CP}px,${CY0 + fr.y * CP}px)`; const a = el.querySelector('.arrow'); if (a) a.style.transform = `rotate(${fr.d * 90}deg)`; }
+    if (fr.fail) {
+      if (el) el.classList.add('bump');
+      const txt = fr.fail === 'off' ? `Card ${fr.i + 1} would drive the toy off the road.` : `Card ${fr.i + 1} runs into roadworks. A jump card can hop over them.`;
+      const m = document.getElementById('l3msg'); if (m) { m.className = 'msg bad'; m.textContent = 'Bump! ' + txt; }
+      setTimeout(() => { l3.pos = startPos; l3.running = false; l3.msg = txt + ' The toy went back to where it started. Fix the algorithm and try again.'; l3.msgType = 'bad'; render(); }, 1200);
+      return;
+    }
+    f++; setTimeout(tick, 430);
+  };
+  setTimeout(tick, 150);
+}
+function finishRun() {
+  const l3 = S.l3, frames = simulate(l3), last = frames[frames.length - 1];
+  l3.pos = { x: last.x, y: last.y, d: last.d }; l3.prog = []; l3.running = false; l3.msgType = '';
+  const m = l3.museums.find(q => q.x === last.x && q.y === last.y && !q.done);
+  const b = BUILDINGS[key(last.x, last.y)];
+  if (m) {
+    m.done = true;
+    const clue = l3.clues.length < 2 ? l3.digits[l3.clues.length] : l3.colour;
+    l3.clues.push(clue); S.modal = { type: 'clue', clue, n: l3.clues.length };
+    l3.msg = l3.clues.length < 3 ? `${3 - l3.clues.length} museum tile${l3.clues.length === 2 ? '' : 's'} left to visit.` : 'All three clues found! Work out the building number and colour, then drive the toy to its entrance.';
+  } else if (b) {
+    const a = answer3(l3);
+    if (l3.clues.length < 3) l3.msg = `This is the entrance to building ${b[0]}. Collect all three museum clues first.`;
+    else if (b[0] === a.num && b[1] === a.colour) { S.done[2] = true; S.modal = { type: 'done', level: 2 }; l3.msg = 'Home!'; l3.msgType = 'good'; }
+    else { l3.msg = `This is building ${b[0]}, and it is ${b[1]}. Check the clues again: the numbers go in the order you found them, and the last digit is the one left over.`; l3.msgType = 'bad'; }
+  } else {
+    const past = l3.museums.some(q => !q.done && frames.some(fr => fr.x === q.x && fr.y === q.y));
+    l3.msg = past ? 'The toy drove over a museum tile. To collect a clue it must stop on the tile.' : 'Good driving. Where next?';
+  }
+  render();
+}
+
+/* ---------- Level 4 ---------- */
+function newL4() {
+  return { pos: { x: 6, y: 3 }, prev: null, tokens: { red: 0, yellow: 0, green: 0, blue: 0 }, deck: shuffle([...Array(76).keys()].map(i => i + 1)), roll: 0, left: 0, phase: 'roll', msg: 'Roll the die to start exploring the building.', msgType: '', opened: {} };
+}
+const hasAll = l4 => DOOR_COLS.every(c => l4.tokens[c] > 0);
+function nextOpts(l4) { const o = []; for (let d = 0; d < 4; d++) { const x = l4.pos.x + DX[d], y = l4.pos.y + DY[d]; if (onFloor(x, y) && !(l4.prev && l4.prev.x === x && l4.prev.y === y)) o.push({ x, y }); } return o; }
+function dieSVG(n) {
+  const P = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[26, 26], [50, 50], [74, 74]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[26, 26], [74, 26], [50, 50], [26, 74], [74, 74]], 6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]] };
+  return `<svg viewBox="0 0 100 100" aria-label="Die showing ${n || 'nothing yet'}">${(P[n] || []).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="#2A1538"/>`).join('')}${n ? '' : '<text x="50" y="62" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="34" fill="#6B5876">?</text>'}</svg>`;
+}
+function floorSVG(l4) {
+  let g = '<image href="l4/floor.jpg" x="0" y="0" width="1600" height="1138"/>';
+  DOOR_COLS.forEach(c => { if (!l4.opened[c]) return; const d = DOORS[c]; g += `<text x="${FX0 + d.x * FPX + FPX / 2}" y="${FY0 + d.y * FPY + FPY / 2 + 14}" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="40" fill="#fff" stroke="#2A1538" stroke-width="3" paint-order="stroke">✕</text>`; });
+  if (l4.phase === 'choose') nextOpts(l4).forEach(o => { g += `<rect class="tilehit pulse" data-act="l4step" data-arg="${o.x},${o.y}" x="${FX0 + o.x * FPX + 6}" y="${FY0 + o.y * FPY + 6}" width="${FPX - 12}" height="${FPY - 12}" rx="10" fill="#fff" fill-opacity=".55" stroke="#2A1538" stroke-width="5"/>`; });
+  g += counterG(l4.pos, FX0, FY0, FPX, FPY, false);
+  return `<svg viewBox="0 0 1600 1138" role="img" aria-label="Floor plan of the building with four coloured doors">${g}</svg>`;
+}
+function viewL4() {
+  const l4 = S.l4, ow = person(S.owner);
+  let action = '';
+  if (l4.phase === 'door') {
+    const c = l4.doorAt;
+    action = l4.opened[c] ? `<p class="msg">You already looked behind the ${c} door.</p><button class="btn ghost" data-act="l4cont">Roll again</button>`
+      : hasAll(l4) ? `<div class="row"><button class="btn lv" data-act="l4knock" data-arg="${c}">Knock on the ${c} door (pay 1 ${c} token)</button><button class="btn ghost small" data-act="l4cont">Not yet</button></div>`
+      : `<p class="msg bad">You are facing the ${c} door, but you need four different coloured tokens to knock. Missing: ${DOOR_COLS.filter(x => !l4.tokens[x]).join(', ')}.</p><button class="btn ghost" data-act="l4cont">Roll again</button>`;
+  } else if (l4.phase === 'teleport') {
+    action = `<p class="msg good">Teleport! Choose a door to go to.</p><div class="row">${DOOR_COLS.filter(c => !l4.opened[c]).map(c => `<button class="btn small" style="background:${TOKC[c]}" data-act="l4tele" data-arg="${c}">${cap(c)} door</button>`).join('')}<button class="btn ghost small" data-act="l4cont">Stay here</button></div>`;
+  }
+  return `
+  <div class="playhead"><div><p class="eyebrow">Level 4 · Building ${S.l3 ? answer3(S.l3).num : ''}</p><h2>Knock, knock!</h2></div></div>
+  <div class="l3">
+    <div class="board">${floorSVG(l4)}</div>
+    <div class="side">
+      <div class="panel box"><div class="lookfor"><img src="l2/${ow.id}.jpg" alt=""><div><p class="eyebrow">Looking for</p><h3 style="font-size:1.6rem">${ow.name}</h3><p class="hint">Find the door ${ow.name} lives behind and return the ${TOYS[S.toy]}.</p></div></div></div>
+      <div class="panel box"><h3>Tokens</h3>
+        <div class="tokens">${DOOR_COLS.map(c => `<div class="tok ${l4.tokens[c] ? '' : 'zero'}"><img src="l4/star_${c}.jpg" alt="${c} token"><b>${l4.tokens[c]}</b></div>`).join('')}</div>
+        <p class="hint">${hasAll(l4) ? 'You have four different colours. Head for a door!' : 'Collect one token of each colour to knock on a door.'}</p></div>
+      <div class="panel box">
+        <div class="diebox"><div class="die" id="die">${dieSVG(l4.roll)}</div>
+          <button class="btn lv" data-act="l4roll" ${l4.phase !== 'roll' ? 'disabled' : ''}>Roll the die</button>
+          ${l4.phase === 'choose' ? `<span style="font-weight:900">${l4.left} square${l4.left > 1 ? 's' : ''} to go</span>` : ''}</div>
+        <p class="msg ${l4.msgType}">${esc(l4.msg)}</p>
+        ${action}
+      </div>
+    </div>
+  </div>`;
+}
+function rollL4() {
+  const l4 = S.l4; l4.phase = 'rolling'; render();
+  let n = 0;
+  const spin = () => {
+    const v = 1 + R(6), d = document.getElementById('die'); if (d) d.innerHTML = dieSVG(v);
+    if (++n < 9) return setTimeout(spin, 70);
+    l4.roll = v; l4.left = v; l4.prev = null; l4.msgType = '';
+    l4.msg = `You rolled ${v}. Tap a flashing square to choose which way to go.`; l4.phase = 'choose'; render();
+  };
+  spin();
+}
+function stepL4(x, y) {
+  const l4 = S.l4; l4.prev = { ...l4.pos }; l4.pos = { x, y }; l4.left--;
+  const el = document.getElementById('ctr'); if (el) el.style.transform = `translate(${FX0 + x * FPX}px,${FY0 + y * FPY}px)`;
+  if (l4.left === 0) return setTimeout(landL4, 340);
+  const o = nextOpts(l4);
+  if (o.length === 1) { l4.phase = 'moving'; return setTimeout(() => stepL4(o[0].x, o[0].y), 340); }
+  l4.phase = 'choose'; l4.msg = 'The path splits. Tap the square you want.'; setTimeout(render, 340);
+}
+function landL4() {
+  const l4 = S.l4, c = MTILES[key(l4.pos.x, l4.pos.y)];
+  const door = DOOR_COLS.find(dc => DOORS[dc].x === l4.pos.x && DOORS[dc].y === l4.pos.y);
+  l4.msgType = '';
+  if (c) { const id = l4.deck.shift(); S.modal = { type: 'quiz', colour: c, id, shown: false }; l4.phase = 'quiz'; l4.msg = `A ${c} museum tile. Draw a quiz card!`; }
+  else if (door) { l4.phase = 'door'; l4.doorAt = door; l4.msg = `You are on the tile facing the ${door} door.`; }
+  else if (l4.pos.x === 6 && l4.pos.y === 3) {
+    if (hasAll(l4) && DOOR_COLS.some(dc => !l4.opened[dc])) { l4.phase = 'teleport'; l4.msg = ''; }
+    else { l4.phase = 'roll'; l4.msg = 'The teleport tile. With four different coloured tokens it can send you to any door. Roll again.'; }
+  } else { l4.phase = 'roll'; l4.msg = 'Roll again.'; }
+  render();
+}
+
+/* ---------- views ---------- */
+function header() {
+  return `<header class="top"><button class="brand" data-act="home"><img src="${toyImg(S.toy || 'bear')}" alt="">Mystery at the Museum</button>
+    <nav class="track" aria-label="Levels">${LEVELS.map((L, i) => `<button class="step" style="--c:${L.colour}" data-act="goto" data-arg="${i}" ${S.screen !== 'title' && S.screen !== 'win' && S.level === i ? 'aria-current="step"' : ''}><span class="dot">${S.done[i] ? '✓' : i + 1}</span><span class="lbl">${L.name}</span></button>`).join('')}</nav></header>`;
+}
+function viewTitle() {
+  return `
+  <section class="panel hero">
+    <div class="art"><img src="ui/cover.jpg" alt="Mystery at the Museum cover"></div>
+    <div class="copy">
+      <p class="eyebrow">Computational thinking for ages 5 to 8 · Collaborative mode</p>
+      <h1 style="font-size:clamp(2.2rem,5vw,3.4rem)">A toy has been left behind!</h1>
+      <p class="lede">Become detectives with Professor Wright, follow the clues across four levels and help the lost toy find its way home.</p>
+      <div class="toyrow">${Object.keys(TOYS).map(t => `<img src="${toyImg(t)}" alt="">`).join('')}</div>
+      <div class="row"><button class="btn" data-act="new" style="font-size:1.35rem">Start the mystery</button></div>
+    </div>
+  </section>
+  <div class="opts">
+    <div class="panel opt"><p class="eyebrow">Level 1 cards</p><div class="seg" role="group" aria-label="Card difficulty"><button data-act="hard" data-arg="0" aria-pressed="${!S.hard}">Easy</button><button data-act="hard" data-arg="1" aria-pressed="${S.hard}">Hard</button></div><p class="hint">12 easy and 12 hard museum cards, as in the printed deck.</p></div>
+    <div class="panel opt"><p class="eyebrow">Level 3 algorithms</p><label class="toggle"><input type="checkbox" id="teachercheck0" data-act="l3toggle" ${S.check ? 'checked' : ''}> Teacher checks each algorithm before it runs</label><p class="hint">The class reads the algorithm aloud together before the toy moves.</p></div>
+    <div class="panel opt"><p class="eyebrow">Jump to a level</p><div class="row">${LEVELS.map((L, i) => `<button class="btn small" style="background:${L.colour}" data-act="goto" data-arg="${i}">${i + 1}</button>`).join('')}</div><p class="hint">Missing earlier results, such as the toy or the owner, are chosen at random.</p></div>
+  </div>
+  <p class="credit">Mystery at the Museum was developed as part of the Erasmus+ project CThink.IT, Think, Learn and Play in a Computational Thinking Way (2022-1-MT01-KA220-SCH-000086903), to support learning in early years and lower primary classrooms. This browser version follows the collaborative rules. Co-funded by the European Union.</p>`;
+}
+function viewIntro() {
+  const L = LEVELS[S.level], text = (L.letter ? L.letter.join(' ') + ' ' + L.sign + '. ' : '') + L.story;
+  return `<section class="panel intro"><div class="band"><div><p class="eyebrow" style="color:var(--ink)">Introduction card</p><h2>Level ${S.level + 1}: ${L.name}</h2></div>
+    <button class="btn ghost small" data-act="speak">${ico('speak')} Read aloud</button></div>
+    <div class="body"><img class="joker" src="ui/joker.jpg" alt="">
+      <div class="letter">
+        ${L.letter ? `<p class="story"><b>${L.letter[0]}</b></p><p class="story">${L.letter[1]}</p><p class="story sign">${L.sign}</p>` : ''}
+        <p class="story">${L.story}</p>
+        <div class="row">${L.skills.map(s => `<span class="chip">${s}</span>`).join('')}</div>
+        <details class="notes"><summary>Teacher notes</summary><ul>${L.notes.map(n => `<li>${n}</li>`).join('')}</ul></details>
+        ${S.level === 0 ? `<div class="row"><span style="font-weight:900">Cards:</span><div class="seg" role="group" aria-label="Card difficulty"><button data-act="hard" data-arg="0" aria-pressed="${!S.hard}">Easy</button><button data-act="hard" data-arg="1" aria-pressed="${S.hard}">Hard</button></div></div>` : ''}
+        <div class="row"><button class="btn lv" data-act="play">Start Level ${S.level + 1}</button></div>
+      </div></div></section>`;
+}
+function viewWin() {
+  const ow = person(S.owner);
+  return `<section class="panel win"><p class="eyebrow">Mystery solved</p><h2>Home at last!</h2>
+    <div class="pair"><img class="p" src="l2/${ow.id}.jpg" alt="${ow.name}"><img class="t" src="${toyImg(S.toy)}" alt=""></div>
+    <p style="font-size:1.25rem;font-weight:800;max-width:30em">${ow.name} opens the ${S.ownerDoor} door and gets the ${TOYS[S.toy]} back. Professor Wright says thank you, Detective Goodeye!</p>
+    <p class="eyebrow">Thinking skills you used</p>
+    <div class="skills">${['Decomposition', 'Pattern recognition', 'Abstraction', 'Algorithmic thinking'].map(s => `<span class="chip">${s}</span>`).join('')}</div>
+    <button class="btn ghost" data-act="new">Play a new mystery</button></section>`;
+}
+function modalHTML() {
+  const m = S.modal; if (!m) return '';
+  let band = '', body = '', mc = 'var(--sun)', wide = false;
+  if (m.type === 'clue') {
+    mc = 'var(--l3)';
+    band = `<p class="eyebrow" style="color:var(--ink)">Museum tile ${m.n} of 3</p><h3>${typeof m.clue === 'number' ? 'A number card!' : 'A colour card!'}</h3>`;
+    body = `<img class="bigclue" src="l3/${typeof m.clue === 'number' ? 'n' + m.clue : m.clue}.png" alt="${typeof m.clue === 'number' ? 'Number ' + m.clue : cap(m.clue)}">
+      <p style="text-align:center;font-weight:800">${typeof m.clue === 'number' ? (m.n === 1 ? 'This is the first number of the building.' : 'This is the second number of the building. The last number is the one left over.') : `The owner’s building is ${m.clue}.`}</p><button class="btn lv" data-act="close">Keep the clue</button>`;
+  }
+  if (m.type === 'check') {
+    mc = 'var(--l3)';
+    band = '<p class="eyebrow" style="color:var(--ink)">Teacher check</p><h3>Read the algorithm together</h3>';
+    body = describe(S.l3) + '<p>Does the class agree this will work?</p><div class="row"><button class="btn lv" data-act="l3go">Run it</button><button class="btn ghost" data-act="close">Change it</button></div>';
+  }
+  if (m.type === 'quiz') {
+    wide = true; mc = TOKC[m.colour];
+    band = `<p class="eyebrow" style="color:var(--ink)">${cap(m.colour)} museum tile</p><h3>Quiz card ${m.id}</h3>`;
+    body = `<img class="quizimg" src="quiz/q${String(m.id).padStart(2, '0')}.jpg" alt="Quiz card ${m.id}">`;
+    if (m.shown) {
+      const a = ANSWERS[m.id], img = SOLIMG.includes(m.id);
+      body += `<div class="answer"><p class="eyebrow">Answer key</p>${a ? `<p class="key">${esc(a)}</p>` : ''}${img ? `<img src="sol/q${m.id}.jpg" alt="Solution for card ${m.id}">` : ''}${!a && !img ? '<p>This card is not in the answer key. The teacher decides.</p>' : ''}${ANSNOTE[m.id] ? `<p class="hint">${ANSNOTE[m.id]}</p>` : ''}</div>
+        <div class="row"><button class="btn lv" style="--lv:${TOKC[m.colour]}" data-act="l4quiz" data-arg="right">Correct: win a ${m.colour} token</button><button class="btn ghost" data-act="l4quiz" data-arg="wrong">Not this time</button></div>`;
+    } else {
+      body += `<div class="row"><button class="btn" data-act="l4show">Show answer</button><button class="btn ghost small" data-act="l4quiz" data-arg="pass">Pass</button></div>`;
+    }
+  }
+  if (m.type === 'empty') {
+    mc = TOKC[m.colour];
+    band = `<p class="eyebrow" style="color:var(--ink)">${cap(m.colour)} envelope</p><h3>Knock, knock…</h3>`;
+    body = `<p style="font-size:1.15rem;font-weight:800">The envelope holds a blank card. ${person(S.owner).name} does not live behind the ${m.colour} door. Keep looking!</p><button class="btn ghost" data-act="close">Roll again</button>`;
+  }
+  if (m.type === 'done') {
+    mc = LEVELS[m.level].colour;
+    const ow = S.owner ? person(S.owner).name : 'the owner';
+    band = `<p class="eyebrow" style="color:var(--ink)">Level ${m.level + 1} complete</p><h3>${['You found the missing toy!', 'You found the owner!', 'You found the building!'][m.level]}</h3>`;
+    body = `<p style="font-size:1.1rem;font-weight:800">${[
+      `The ${TOYS[S.toy]} is your counter now. Next, find out who left it behind.`,
+      `${ow} left the toy behind. Next, find out where ${ow} lives.`,
+      S.l3 ? `${ow} lives in building ${answer3(S.l3).num}, the ${S.l3.colour} one. Next, find the right door.` : ''][m.level]}</p>
+      <div class="row"><span class="chip">${LEVELS[m.level].skills.join(' · ')}</span></div>
+      <button class="btn lv" style="--lv:${LEVELS[m.level + 1].colour}" data-act="goto" data-arg="${m.level + 1}">Go to Level ${m.level + 2}</button>`;
+  }
+  return `<div class="scrim" role="dialog" aria-modal="true"><div class="panel modal ${wide ? 'wide' : ''}" style="--mc:${mc}"><div class="band">${band}</div><div class="body">${body}</div></div></div>`;
+}
+function render() {
+  const app = document.getElementById('app');
+  const lv = S.screen === 'title' || S.screen === 'win' ? 'var(--sun)' : LEVELS[S.level].colour;
+  let main = '';
+  if (S.screen === 'title') main = viewTitle();
+  else if (S.screen === 'intro') main = viewIntro();
+  else if (S.screen === 'win') main = viewWin();
+  else main = [viewL1, viewL2, viewL3, viewL4][S.level]();
+  app.style.setProperty('--lv', lv);
+  app.innerHTML = header() + `<main style="display:grid;gap:16px">${main}</main>` + modalHTML();
+  if (S.l1 && S.l1.flash) setTimeout(() => { if (S.l1) S.l1.flash = 0; }, 450);
+}
+
+/* ---------- flow ---------- */
+function ensurePrereqs(n) {
+  if (n >= 1 && !S.toy) S.toy = pick(Object.keys(TOYS));
+  if (n >= 2 && !S.owner) S.owner = newL2().owner;
+  if (n >= 3 && !S.ownerDoor) S.ownerDoor = pick(DOOR_COLS);
+  if (n >= 3 && !S.l3) S.l3 = newL3();
+}
+function goto(n) {
+  ensurePrereqs(n);
+  S.level = n; S.screen = 'intro'; S.modal = null;
+  if (n === 0) S.l1 = newL1();
+  if (n === 1) S.l2 = newL2();
+  if (n === 2) S.l3 = newL3();
+  if (n === 3) S.l4 = newL4();
+  render(); window.scrollTo(0, 0);
+}
+const ACT = {
+  home() { S.screen = 'title'; S.modal = null; render(); },
+  new() { const hard = S.hard, check = S.check, seen = S.seen1; S = freshState(); S.hard = hard; S.check = check; S.seen1 = seen; goto(0); },
+  goto(a) { goto(+a); },
+  hard(a) { S.hard = a === '1'; if (S.screen === 'intro' && S.level === 0) S.l1 = newL1(); render(); },
+  speak() { const L = LEVELS[S.level]; speak((L.letter ? L.letter.join(' ') + ' ' + L.sign + '. ' : '') + L.story); },
+  play() { S.screen = 'play'; render(); window.scrollTo(0, 0); },
+  close() { S.modal = null; render(); },
+  finish(a) { const n = +a; S.done[n] = true; S.modal = { type: 'done', level: n }; render(); },
+
+  l1new() { S.l1 = newL1(); render(); },
+  l1hit() { const l1 = S.l1; if (l1.found) return; l1.found = true; S.toy = L1CARDS[l1.n][0]; render(); },
+  l1miss() { const l1 = S.l1; if (l1.found) return; l1.misses++; l1.flash = 1; render(); },
+
+  l2tap(a) { const l2 = S.l2; if (l2.phase !== 'sort') return; l2.aside[a] = !l2.aside[a]; l2.msg = ''; render(); },
+  l2check() {
+    const l2 = S.l2, k = l2.shown;
+    const visible = l2.cards.filter(c => failsAt(c.id, l2) > k - 1);
+    const should = visible.filter(c => failsAt(c.id, l2) === k), keep = visible.filter(c => failsAt(c.id, l2) > k);
+    const wrong = keep.filter(c => l2.aside[c.id]), missing = should.filter(c => !l2.aside[c.id]);
+    const names = l => l.map(c => person(c.id).name).join(' and ');
+    if (wrong.length) { l2.msg = `Look again at ${names(wrong)}. ${wrong.length > 1 ? 'They still match' : 'That person still matches'} ${k === 0 ? 'the shadow' : 'every clue so far'}.`; l2.msgType = 'bad'; }
+    else if (missing.length) { l2.msg = `Nearly! ${missing.length} ${missing.length > 1 ? 'people' : 'person'} left on the table ${k === 0 ? 'don’t match the shadow' : 'don’t fit the testimony'}. Keep looking.`; l2.msgType = 'bad'; }
+    else {
+      l2.aside = {}; l2.msgType = 'good';
+      if (keep.length === 1) { l2.phase = 'done'; S.owner = l2.owner; S.ownerDoor = pick(DOOR_COLS); S.l3 = null; l2.msg = ''; }
+      else { l2.phase = 'ask'; l2.msg = k === 0 ? `Well done! ${keep.length} people match the shadow.` : `Well done! ${keep.length} people still fit the clues.`; }
+    }
+    render();
+  },
+  l2more() { const l2 = S.l2; l2.shown++; l2.phase = 'sort'; l2.msg = ''; l2.msgType = ''; render(); },
+  l2nomore() { const l2 = S.l2, n = l2.cards.filter(c => failsAt(c.id, l2) > l2.shown).length; l2.msg = `There are still ${n} people who could be the owner. We need another testimony to be sure.`; l2.msgType = 'bad'; render(); },
+
+  l3place(a) { const l3 = S.l3; if (!l3.setup) return; const [x, y] = a.split(',').map(Number); if (l3.museums.some(m => m.x === x && m.y === y)) return; l3.museums[l3.placeNext] = { x, y, done: false }; l3.placeNext = (l3.placeNext + 1) % 3; render(); },
+  l3shuffle() { S.l3.museums = randomMuseums(); render(); },
+  l3begin() { const l3 = S.l3; l3.setup = false; l3.msg = 'The toy is on START, facing left. Build your first algorithm with the move cards.'; render(); },
+  l3restart() { const l3 = S.l3; l3.museums.forEach(m => m.done = false); l3.clues = []; l3.digits = shuffle([1, 2, 3]); l3.colour = pick(['blue', 'orange']); l3.pos = { ...START3, d: 3 }; l3.prog = []; l3.setup = true; l3.msg = ''; render(); },
+  l3face(a) { const l3 = S.l3; if (l3.running) return; l3.pos.d = +a; render(); },
+  l3add(a) { const l3 = S.l3; if (l3.running || l3.prog.length >= 24) return; l3.prog.push(a); l3.msgType = ''; l3.msg = `${l3.prog.length} card${l3.prog.length > 1 ? 's' : ''} in your algorithm.`; render(); },
+  l3remove(a) { const l3 = S.l3; if (l3.running) return; l3.prog.splice(+a, 1); render(); },
+  l3clear() { S.l3.prog = []; render(); },
+  l3toggle(a, e, t) { S.check = t.checked; },
+  l3run() { if (S.check) { S.modal = { type: 'check' }; render(); } else runL3(); },
+  l3go() { runL3(); },
+
+  l4roll() { if (S.l4.phase === 'roll') rollL4(); },
+  l4step(a) { const l4 = S.l4; if (l4.phase !== 'choose') return; const [x, y] = a.split(',').map(Number); l4.phase = 'moving'; l4.msg = ''; render(); stepL4(x, y); },
+  l4show() { S.modal.shown = true; render(); },
+  l4quiz(a) {
+    const m = S.modal, l4 = S.l4;
+    if (a === 'right') { l4.tokens[m.colour]++; l4.msg = `Correct! You won a ${m.colour} token.`; l4.msgType = 'good'; }
+    else { l4.deck.push(m.id); l4.msg = (a === 'pass' ? 'You passed.' : 'Not this time.') + ' The card goes to the bottom of the deck. Roll again.'; l4.msgType = ''; }
+    S.modal = null; l4.phase = 'roll'; render();
+  },
+  l4cont() { const l4 = S.l4; l4.phase = 'roll'; l4.msg = 'Roll the die.'; l4.msgType = ''; render(); },
+  l4tele(a) { const l4 = S.l4, d = DOORS[a]; l4.pos = { x: d.x, y: d.y }; l4.prev = null; l4.phase = 'door'; l4.doorAt = a; l4.msg = `Whoosh! You are facing the ${a} door.`; render(); },
+  l4knock(a) {
+    const l4 = S.l4; if (!hasAll(l4) || l4.opened[a]) return;
+    l4.tokens[a]--; l4.opened[a] = true; l4.phase = 'roll';
+    if (a === S.ownerDoor) { S.done[3] = true; S.screen = 'win'; S.modal = null; render(); window.scrollTo(0, 0); return; }
+    S.modal = { type: 'empty', colour: a }; l4.msg = `Not behind the ${a} door. Win more tokens and try another door.`; l4.msgType = ''; render();
+  }
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]');
+  if (!t || t.disabled) return;
+  const f = ACT[t.dataset.act]; if (f) f(t.dataset.arg, e, t);
+});
+
+/* ---------- boot ---------- */
+function start(data) {
+  S = (data && data.S && data.S.v === 2) ? data.S : freshState();
+  if (S.l3) S.l3.running = false;
+  if (S.l4 && ['moving', 'rolling'].includes(S.l4.phase)) S.l4.phase = 'roll';
+  render();
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>
